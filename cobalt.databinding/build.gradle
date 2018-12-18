@@ -25,7 +25,7 @@ kotlin {
             resources.srcDirs = ["common/src/main/resources"]
             dependencies {
                 implementation 'org.jetbrains.kotlin:kotlin-stdlib'
-                api group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: coroutines_version
+                api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
                 api project(":cobalt.datatypes")
                 api project(":cobalt.events")
             }
@@ -65,11 +65,11 @@ kotlin {
             resources.srcDirs = ["web/src/main/resources"]
             dependencies {
                 api 'org.jetbrains.kotlin:kotlin-stdlib-js'
-                api group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core-js', version: coroutines_version
+                api "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:$coroutines_version"
                 api project(":cobalt.datatypes")
             }
         }
-		
+
         webTest {
             kotlin.srcDirs = ["web/src/test/kotlin"]
             resources.srcDirs = ["web/src/test/resources"]
