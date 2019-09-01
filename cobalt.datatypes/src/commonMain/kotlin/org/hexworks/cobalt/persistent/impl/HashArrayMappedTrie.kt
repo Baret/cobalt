@@ -1,26 +1,27 @@
 @file:Suppress("UNCHECKED_CAST", "RemoveExplicitTypeArguments")
 
-package org.hexworks.cobalt.persistent
+package org.hexworks.cobalt.persistent.impl
 
 import org.hexworks.cobalt.datatypes.Maybe
+import org.hexworks.cobalt.persistent.PersistentMap
 
 /**
  * An immutable [Hash array mapped trie (HAMT)](https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
  */
-interface HashArrayMappedTrie<K, V> : Iterable<Pair<K, V>> {
+interface HashArrayMappedTrie<K, V> : Iterable<Pair<K, V>>, PersistentMap<K, V> {
 
-    val isEmpty: Boolean
-    val size: Int
+    override val size: Int
+    override val keys: Set<K>
+        get() = keysIterator().asSequence().toSet()
 
-    operator fun get(key: K): Maybe<out V>
+    override val values: Collection<V>
+        get() = valuesIterator().asSequence().toList()
+    override val entries: Set<Pair<K, V>>
+        get() = iterator().asSequence().toSet()
 
     operator fun plus(element: Pair<K, V>) = put(element.first, element.second)
 
     operator fun minus(key: K) = remove(key)
-
-    fun getOrElse(key: K, defaultValue: V): V
-
-    fun containsKey(key: K): Boolean
 
     fun put(key: K, value: V): HashArrayMappedTrie<K, V>
 
@@ -234,7 +235,7 @@ fun bitCount(i: Int): Int {
  */
 class EmptyNode<K, V> private constructor() : HAMTNode<K, V>() {
 
-    override val isEmpty = true
+    override fun isEmpty() = true
     override val size = 0
 
     override fun lookup(shift: Int, keyHash: Int, key: K): Maybe<out V> = Maybe.empty()
@@ -266,7 +267,7 @@ class EmptyNode<K, V> private constructor() : HAMTNode<K, V>() {
  */
 abstract class LeafNode<K, V> : HAMTNode<K, V>() {
 
-    override val isEmpty = false
+    override fun isEmpty() = false
 
     abstract val key: K
     abstract val value: V
@@ -454,7 +455,7 @@ class IndexedNode<K, V>(private val bitmap: Int,
                         override val size: Int,
                         val subNodes: Array<Any?>) : HAMTNode<K, V>() {
 
-    override val isEmpty = false
+    override fun isEmpty() = false
 
     override fun lookup(shift: Int, keyHash: Int, key: K): Maybe<out V> {
         val frag = hashFragment(shift, keyHash)
@@ -491,8 +492,8 @@ class IndexedNode<K, V>(private val bitmap: Int,
             EmptyNode.instance<K, V>().put(shift + SIZE, keyHash, key, value)
         }
 
-        val removed = exists && child.isEmpty
-        val added = !exists && !child.isEmpty
+        val removed = exists && child.isEmpty()
+        val added = !exists && !child.isEmpty()
         val newBitmap = if (removed) mask and bit.inv() else if (added) mask or bit else mask
         return if (newBitmap == 0) {
             EmptyNode.instance()
@@ -529,8 +530,8 @@ class IndexedNode<K, V>(private val bitmap: Int,
         } else {
             EmptyNode.instance<K, V>().remove(shift + SIZE, keyHash, key)
         }
-        val removed = exists && child.isEmpty
-        val added = !exists && !child.isEmpty
+        val removed = exists && child.isEmpty()
+        val added = !exists && !child.isEmpty()
         val newBitmap = if (removed) mask and bit.inv() else if (added) mask or bit else mask
         return if (newBitmap == 0) {
             EmptyNode.instance()
@@ -585,7 +586,7 @@ class ArrayNode<K, V>(private val count: Int,
                       override val size: Int,
                       val subNodes: Array<Any?>) : HAMTNode<K, V>() {
 
-    override val isEmpty = false
+    override fun isEmpty() = false
 
     override fun lookup(shift: Int, keyHash: Int, key: K): Maybe<out V> {
         val frag = hashFragment(shift, keyHash)
@@ -614,9 +615,9 @@ class ArrayNode<K, V>(private val count: Int,
     }
 
     private fun modify(child: HAMTNode<K, V>, newChild: HAMTNode<K, V>, hashFragment: Int): HAMTNode<K, V> {
-        return if (child.isEmpty && !newChild.isEmpty) {
+        return if (child.isEmpty() && !newChild.isEmpty()) {
             ArrayNode(count + 1, size + newChild.size, update(subNodes, hashFragment, newChild))
-        } else if (!child.isEmpty && newChild.isEmpty) {
+        } else if (!child.isEmpty() && newChild.isEmpty()) {
             if (count - 1 <= MIN_ARRAY_NODE) {
                 pack(hashFragment, subNodes)
             } else {
@@ -634,7 +635,7 @@ class ArrayNode<K, V>(private val count: Int,
         var ptr = 0
         for (i in 0 until BUCKET_SIZE) {
             val elem = elements[i] as HAMTNode<K, V>
-            if (i != idx && !elem.isEmpty) {
+            if (i != idx && !elem.isEmpty()) {
                 size += elem.size
                 arr[ptr++] = elem
                 bitmap = bitmap or (1 shl i)

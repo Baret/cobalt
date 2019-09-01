@@ -1,6 +1,6 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package org.hexworks.cobalt.persistent
+package org.hexworks.cobalt.persistent.impl
 
 import org.hexworks.cobalt.Predicate
 import org.hexworks.cobalt.datatypes.Maybe

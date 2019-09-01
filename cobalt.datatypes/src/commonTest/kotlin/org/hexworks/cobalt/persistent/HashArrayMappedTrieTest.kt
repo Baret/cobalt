@@ -1,6 +1,7 @@
 package org.hexworks.cobalt.persistent
 
 import org.hexworks.cobalt.datatypes.Maybe
+import org.hexworks.cobalt.persistent.impl.HashArrayMappedTrie
 import kotlin.math.abs
 import kotlin.random.Random
 import kotlin.test.Test
@@ -28,7 +29,7 @@ class HashArrayMappedTrieTest {
         target.put("foo", 1)
 
         assertTrue {
-            target.isEmpty
+            target.isEmpty()
         }
     }
 
