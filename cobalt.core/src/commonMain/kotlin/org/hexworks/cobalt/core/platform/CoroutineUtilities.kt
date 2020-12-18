@@ -5,4 +5,5 @@ import kotlin.coroutines.CoroutineContext
 
 expect fun <T: Any> runTest(
         context: CoroutineContext = GlobalScope.coroutineContext,
-        block: suspend () -> T)
+        block: suspend () -> T
+)

@@ -1,8 +1,9 @@
 package org.hexworks.cobalt.databinding.internal.binding
 
-import javafx.collections.ObservableList
+import kotlinx.collections.immutable.persistentListOf
 import org.hexworks.cobalt.databinding.api.binding.*
 import org.hexworks.cobalt.databinding.api.collection.ListProperty
+import org.hexworks.cobalt.databinding.api.collection.ObservableListBinding
 import org.hexworks.cobalt.databinding.api.extension.ObservablePersistentCollection
 import org.hexworks.cobalt.databinding.api.extension.toProperty
 import kotlin.test.Test
@@ -17,19 +18,39 @@ class CollectionBindingsTest {
 
     @Test
     fun When_list_properties_are_flattened_Then_the_binding_value_is_properly_calculated() {
-        val a = mutableListOf(1, 2, 3).toProperty()
-        val b = mutableListOf(4, 5, 6).toProperty()
+        val a: ListProperty<Int> = mutableListOf(1, 2, 3).toProperty()
+        val b: ListProperty<Int> = mutableListOf(4, 5, 6).toProperty()
 
-        val fm = mutableListOf<ObservablePersistentCollection<Int>>().toProperty()
+        val combined = persistentListOf<ObservablePersistentCollection<Int>>().toProperty()
 
-        val result = fm.bindFlatten()
+        val result: ObservableListBinding<Int> = combined.bindFlatten()
 
-        fm.add(a)
-        fm.add(b)
+        combined.add(a)
+        combined.add(b)
 
         assertEquals(
-            expected = a.value + b.value,
-            actual = result.value
+                expected = listOf(1, 2, 3, 4, 5, 6),
+                actual = result.value
+        )
+    }
+
+    @Test
+    fun When_list_properties_are_flattened_and_an_element_changes_Then_the_binding_value_is_properly_calculated() {
+        val a: ListProperty<Int> = mutableListOf(1, 2, 3).toProperty()
+        val b: ListProperty<Int> = mutableListOf(4, 5, 6).toProperty()
+
+        val combined = persistentListOf<ObservablePersistentCollection<Int>>().toProperty()
+
+        val result: ObservableListBinding<Int> = combined.bindFlatten()
+
+        combined.add(a)
+        combined.add(b)
+
+        b.add(7)
+
+        assertEquals(
+                expected = listOf(1, 2, 3, 4, 5, 6, 7),
+                actual = result.value
         )
     }
 
@@ -48,8 +69,8 @@ class CollectionBindingsTest {
         fm.remove(a)
 
         assertEquals(
-            expected = b.value,
-            actual = result.value
+                expected = b.value,
+                actual = result.value
         )
     }
 
